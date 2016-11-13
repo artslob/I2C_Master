@@ -19,10 +19,13 @@ module I2C(
 	localparam STATE_STOP = 7;
 	localparam STATE_GACK1 = 8;
 	localparam STATE_GACK2 = 9;
+	localparam STATE_SUB_ADDR = 10;
 
 	reg [7:0] state;
 	reg [6:0] addr;
+	reg [7:0] sub_addr;
 	reg [7:0] count;
+	reg [7:0] delay;
 	reg [7:0] data;
 	reg [7:0] data_count;
 	
@@ -65,15 +68,16 @@ module I2C(
 	/* this where server receive */
 	always@(posedge scl) begin
 		case(state)
-			STATE_GACK2: begin //9
-				sda_enable <= 0;
+			/*STATE_GACK2: begin //9
 				if (sda == 0) begin
-					state <= STATE_DATA;
+					state <= STATE_SUB_ADDR; //go to 10
+					sda_enable <= 1;
+					sda_value <= 0;
 				end else begin
-					state <= STATE_IDLE;
+					state <= STATE_IDLE; //go to 0
 				end
 				count <= 7;
-			end
+			end*/
 			
 			STATE_DATA: begin //6
 				sda_enable <= 0;	
@@ -109,26 +113,65 @@ module I2C(
 				sda_enable <= 0;
 			end
 			
-			STATE_GACK1: begin //8
+			/*STATE_GACK1: begin //8
 				sda_enable <= 0;
 				state <= STATE_GACK2; //go to 9
-			end
+			end*/
 		endcase
 	end
 
 	always@(posedge clk) begin
 		if (reset == 1) begin
 			state <= STATE_IDLE;
-			out <= 0;
+			out <= 32'd0;
 			addr <= 7'b100_1000;//h90 in 8 bit
+			sub_addr <= 8'b0000_0001;
+			delay <= 8'd0;
 			count <= 8'd0;
 			data <= 8'd0;
 			sda_enable <= 1;
 			sda_value <= 1;
-			data_count <= 0;
+			data_count <= 8'd0;
 		end
 		else begin
-
+			/* on posedge scl */
+			if (sda_count == 0) begin
+				case(state)
+					STATE_GACK1: begin //8
+						if (sda == 0) begin
+							state <= STATE_SUB_ADDR; //go to 10
+							count <= 7;
+						end
+						else state <= STATE_IDLE;
+					end
+					
+					STATE_GACK2: begin //9
+						if (delay == 0)begin
+							if (sda == 0) begin
+								state <= STATE_DATA; //go to 6
+							end
+							else state <= STATE_IDLE;
+						end
+					end
+				endcase
+			end
+			/* on negedge scl*/
+			if (sda_count == 2) begin
+				case(state)
+					STATE_RW: begin //3
+						if (delay == 0) begin
+							state <= STATE_GACK1; //go to 8
+							#1 sda_enable <= 0;
+						end
+					end
+					
+					STATE_GACK2: begin //9
+						sda_enable <= 0;
+					end
+				endcase
+			end
+			
+			/* between scl */
 			if (sda_count == 3) begin
 				case(state)
 					STATE_IDLE: begin //0
@@ -144,15 +187,37 @@ module I2C(
 					end
 					
 					STATE_ADDR: begin //2
-						sda_value <= addr[count];
-						if (count == 0) state <= STATE_RW;					
+						sda_value <= addr[count];				
 						count <= count - 1;
+						if (count == 0) begin
+							delay <= 1;
+							state <= STATE_RW;
+						end
 					end
 					
 					STATE_RW: begin //3
-						sda_value <= 1; //read
-						state <= STATE_GACK1; //go to 8
+						sda_value <= 0; //write sub_addr
 						data_count <= 8;
+						delay <= delay - 1;
+					end
+					
+					STATE_GACK1: begin //8
+						sda_enable <= 0;
+					end
+					
+					STATE_SUB_ADDR: begin //10
+						sda_enable <= 1;
+						sda_value <= sub_addr[count];
+						if (count == 0) begin
+							state <= STATE_GACK2; //go to 9
+							delay <= 1;
+						end
+						count <= count - 1;
+					end
+					
+					STATE_GACK2: begin //9
+						delay <= delay - 1;
+						sda_enable <= 0;
 					end
 					
 					STATE_WACK1: begin //4
