@@ -20,6 +20,7 @@ module I2C(
 	localparam STATE_GACK1 = 8;
 	localparam STATE_GACK2 = 9;
 	localparam STATE_SUB_ADDR = 10;
+	localparam STATE_START2 = 11;
 
 	reg [7:0] state;
 	reg [6:0] addr;
@@ -28,6 +29,7 @@ module I2C(
 	reg [7:0] delay;
 	reg [7:0] data;
 	reg [7:0] data_count;
+	reg rw;
 	
 	reg scl_enable = 0;
 	reg scl_value = 0;
@@ -132,6 +134,7 @@ module I2C(
 			sda_enable <= 1;
 			sda_value <= 1;
 			data_count <= 8'd0;
+			rw <= 1'b0;
 		end
 		else begin
 			/* on posedge scl */
@@ -139,7 +142,8 @@ module I2C(
 				case(state)
 					STATE_GACK1: begin //8
 						if (sda == 0) begin
-							state <= STATE_SUB_ADDR; //go to 10
+							if (rw == 1'b0) state <= STATE_SUB_ADDR; //go to 10
+							else state <= STATE_DATA;
 							count <= 7;
 						end
 						else state <= STATE_IDLE;
@@ -148,7 +152,9 @@ module I2C(
 					STATE_GACK2: begin //9
 						if (delay == 0)begin
 							if (sda == 0) begin
-								state <= STATE_DATA; //go to 6
+								//state <= STATE_DATA; //go to 6
+								state <= STATE_START2; //go to 11
+								delay <= 1;
 							end
 							else state <= STATE_IDLE;
 						end
@@ -196,7 +202,7 @@ module I2C(
 					end
 					
 					STATE_RW: begin //3
-						sda_value <= 0; //write sub_addr
+						sda_value <= rw; //write sub_addr
 						data_count <= 8;
 						delay <= delay - 1;
 					end
@@ -220,6 +226,11 @@ module I2C(
 						sda_enable <= 0;
 					end
 					
+					STATE_START2: begin //11
+						sda_enable <= 1;
+						sda_value <= 1;
+					end
+					
 					STATE_WACK1: begin //4
 						sda_enable <= 1;
 						sda_value <= 0;
@@ -236,6 +247,21 @@ module I2C(
 						state <= STATE_IDLE;
 					end
 					
+				endcase
+			end
+			
+			/* in middle of scl */
+			if (sda_count == 1) begin
+				case(state)
+					STATE_START2: begin //11
+						delay <= delay - 1;
+						if (delay == 0) begin
+							sda_value <= 0;
+							state <= STATE_ADDR;
+							rw <= 1;
+							count <= 6;
+						end
+					end
 				endcase
 			end
 		end
