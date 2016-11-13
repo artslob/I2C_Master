@@ -67,67 +67,12 @@ module I2C(
 		end
 	end
 	
-	/* this where server receive */
-	always@(posedge scl) begin
-		case(state)
-			/*STATE_GACK2: begin //9
-				if (sda == 0) begin
-					state <= STATE_SUB_ADDR; //go to 10
-					sda_enable <= 1;
-					sda_value <= 0;
-				end else begin
-					state <= STATE_IDLE; //go to 0
-				end
-				count <= 7;
-			end*/
-			
-			STATE_DATA: begin //6
-				sda_enable <= 0;	
-				data[count] <= sda;
-				if (4 <= data_count && data_count <= 7 && count != 8) begin
-					out[(data_count - 4) * 8 + count] = sda;
-				end
-				count <= count - 1;
-			end
-		endcase
-	end
-	
-	always@(negedge scl) begin
-		case(state)
-			STATE_DATA: begin //6
-				if (count == 255) begin
-					data_count <= data_count - 1;
-					if(data_count == 0) begin
-						sda_enable <= 1;
-						sda_value <= 0;
-						state <= STATE_WACK2;
-					end else begin
-						sda_enable <= 1;
-						sda_value <= 0;
-						state <= STATE_WACK1;
-					end
-				end
-			end
-			
-			STATE_WACK1: begin //4
-				state <= STATE_DATA;
-				count <= 7;
-				sda_enable <= 0;
-			end
-			
-			/*STATE_GACK1: begin //8
-				sda_enable <= 0;
-				state <= STATE_GACK2; //go to 9
-			end*/
-		endcase
-	end
-
 	always@(posedge clk) begin
 		if (reset == 1) begin
 			state <= STATE_IDLE;
 			out <= 32'd0;
 			addr <= 7'b100_1000;//h90 in 8 bit
-			sub_addr <= 8'b0000_0001;
+			sub_addr <= 8'b0000_0000;
 			delay <= 8'd0;
 			count <= 8'd0;
 			data <= 8'd0;
@@ -159,6 +104,15 @@ module I2C(
 							else state <= STATE_IDLE;
 						end
 					end
+					
+					STATE_DATA: begin //6
+						sda_enable <= 0;	
+						data[count] <= sda;
+						if (count != 8) begin
+							out[data_count * 8 + count] <= sda;
+						end
+						count <= count - 1;
+					end
 				endcase
 			end
 			/* on negedge scl*/
@@ -167,11 +121,34 @@ module I2C(
 					STATE_RW: begin //3
 						if (delay == 0) begin
 							state <= STATE_GACK1; //go to 8
-							#1 sda_enable <= 0;
+							sda_enable <= 0;
 						end
 					end
 					
 					STATE_GACK2: begin //9
+						sda_enable <= 0;
+					end
+					
+					STATE_DATA: begin //6
+						if (count == 255) begin
+							data_count <= data_count - 1;
+							if(data_count == 0) begin
+								//sda_enable <= 1;
+								//sda_value <= 0;
+								state <= STATE_WACK2; //go to 5 - last wack
+								sda_enable <= 0;
+								delay <= 1;
+							end else begin
+								sda_enable <= 1;
+								sda_value <= 0;
+								state <= STATE_WACK1;
+							end
+						end
+					end
+					
+					STATE_WACK1: begin //4
+						state <= STATE_DATA;
+						count <= 7;
 						sda_enable <= 0;
 					end
 				endcase
@@ -203,7 +180,7 @@ module I2C(
 					
 					STATE_RW: begin //3
 						sda_value <= rw; //write sub_addr
-						data_count <= 8;
+						data_count <= 3;
 						delay <= delay - 1;
 					end
 					
@@ -237,13 +214,18 @@ module I2C(
 					end
 					
 					STATE_WACK2: begin //5
-						sda_enable <= 1;
-						sda_value <= 0;
-						state <= STATE_STOP;
+						sda_enable <= 0;
+						delay <= delay - 1;
+						if (delay == 0) begin
+							state <= STATE_STOP;
+							sda_enable <= 1;
+							sda_value <= 0;
+						end
 					end
 					
 					STATE_STOP: begin //7
 						sda_value <= 1;
+						rw <= 0;
 						state <= STATE_IDLE;
 					end
 					
@@ -268,3 +250,58 @@ module I2C(
 	end
 
 endmodule
+
+/* this where server receive */
+	/*always@(posedge scl) begin
+		case(state)
+			STATE_GACK2: begin //9
+				if (sda == 0) begin
+					state <= STATE_SUB_ADDR; //go to 10
+					sda_enable <= 1;
+					sda_value <= 0;
+				end else begin
+					state <= STATE_IDLE; //go to 0
+				end
+				count <= 7;
+			end
+			
+			STATE_DATA: begin //6
+				sda_enable <= 0;	
+				data[count] <= sda;
+				if (4 <= data_count && data_count <= 7 && count != 8) begin
+					out[(data_count - 4) * 8 + count] = sda;
+				end
+				count <= count - 1;
+			end
+		endcase
+	end*/
+	
+		/*always@(negedge scl) begin
+		case(state)
+			STATE_DATA: begin //6
+				if (count == 255) begin
+					data_count <= data_count - 1;
+					if(data_count == 0) begin
+						sda_enable <= 1;
+						sda_value <= 0;
+						state <= STATE_WACK2;
+					end else begin
+						sda_enable <= 1;
+						sda_value <= 0;
+						state <= STATE_WACK1;
+					end
+				end
+			end
+			
+			STATE_WACK1: begin //4
+				state <= STATE_DATA;
+				count <= 7;
+				sda_enable <= 0;
+			end
+			
+			STATE_GACK1: begin //8
+				sda_enable <= 0;
+				state <= STATE_GACK2; //go to 9
+			end
+		endcase
+	end*/
