@@ -5,6 +5,7 @@ module I2C(
 	input reset,
 	input [1:0] sw,
 	output reg [15:0] out,
+	output reg [7:0] id,
 	output wire scl,
 	inout wire sda
 	);
@@ -27,9 +28,9 @@ module I2C(
 	reg [7:0] sub_addr;
 	reg [7:0] count;
 	reg [7:0] delay;
-	reg [7:0] data;
 	reg [7:0] data_count;
 	reg rw;
+	reg id_readed;
 	
 	reg scl_enable = 0;
 	reg scl_value = 0;
@@ -39,7 +40,7 @@ module I2C(
 	reg sda_value = 0;
 	reg [1:0] sda_count = 0;
 	
-	assign scl = (scl_enable) ? scl_value : 1;
+	assign scl = (scl_enable) ? scl_value : 1'b1;
 	
 	assign sda = (sda_enable) ? sda_value : 1'bz;
 	
@@ -70,16 +71,17 @@ module I2C(
 	always@(posedge clk) begin
 		if (reset == 1) begin
 			state <= STATE_IDLE;
-			out <= 16'hFFFF;
+			out <= 16'h0000;
 			addr <= 7'b100_1011;//h4B in 7 bit
-			sub_addr <= 8'h0B;
+			sub_addr <= 8'h00;
 			delay <= 8'd0;
 			count <= 8'd0;
-			data <= 8'd0;
 			sda_enable <= 1;
 			sda_value <= 1;
 			data_count <= 8'd0;
 			rw <= 1'b0;
+			id <= 8'h00;
+			id_readed <= 1'b0;
 		end
 		else begin
 			/* on posedge scl */
@@ -108,10 +110,13 @@ module I2C(
 					end
 					
 					STATE_DATA: begin //6
-						sda_enable <= 0;	
-						data[count] <= sda;
+						sda_enable <= 0;
 						if (count != 8) begin
-							out[data_count * 8 + count] <= sda;
+							if (id_readed == 0) begin
+								id[count] <= sda;
+							end else begin
+								out[data_count * 8 + count] <= sda;
+							end
 						end
 						count <= count - 1;
 					end
@@ -135,8 +140,6 @@ module I2C(
 						if (count == 255) begin
 							data_count <= data_count - 1;
 							if(data_count == 0) begin
-								//sda_enable <= 1;
-								//sda_value <= 0;
 								state <= STATE_WACK2; //go to 5 - last wack
 								sda_enable <= 0;
 								delay <= 1;
@@ -169,6 +172,13 @@ module I2C(
 						sda_value <= 0;
 						state <= STATE_ADDR;
 						count <= 6;
+						if (id_readed == 0) begin
+							data_count <= 0;
+							sub_addr <= 8'h03;//here id address, should be 0B!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+						end else begin
+							data_count <= 1;
+							sub_addr <= 8'h00;
+						end
 					end
 					
 					STATE_ADDR: begin //2
@@ -181,8 +191,7 @@ module I2C(
 					end
 					
 					STATE_RW: begin //3
-						sda_value <= rw; //write sub_addr
-						data_count <= 0;
+						sda_value <= rw;
 						delay <= delay - 1;
 					end
 					
@@ -232,6 +241,9 @@ module I2C(
 						delay <= delay - 1;
 						if (delay == 0) begin
 							state <= STATE_IDLE;
+						end
+						if (id_readed == 0) begin
+							id_readed <= 1'b1;
 						end
 					end
 					

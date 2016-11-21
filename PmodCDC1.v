@@ -58,7 +58,7 @@ module PmodCDC1 (scl, sda);
 		mem[0] = 8'b1010_1010;
 		mem[1] = 8'b0101_0101;
 		mem[2] = 8'b1010_1010;
-		mem[3] = 8'b0101_0101;
+		mem[3] = 8'hCB;
 	end
 
 	// generate shift register

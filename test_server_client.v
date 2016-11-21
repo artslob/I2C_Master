@@ -9,13 +9,15 @@ module test_server_client;
 
 	// Outputs
 	wire [15:0] out;
+	wire [7:0] id;
 
 	// Instantiate the Unit Under Test (UUT)
 	server_client serv_cli (
 		.clk(clk), 
 		.reset(reset), 
 		.sw(sw), 
-		.out(out)
+		.out(out),
+		.id(id)
 	);
 	
 	initial begin
@@ -30,7 +32,7 @@ module test_server_client;
 		reset = 1;
 		sw = 1;
 		
-		#10000; //10000 ns = 10 us
+		#100; //10000 ns = 10 us
 		
 		reset = 0;
 	end
