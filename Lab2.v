@@ -9,9 +9,9 @@ module Lab2(
 	output wire scl
    );
 	
-	wire [31:0] out;
+	wire [15:0] out;
 	wire i2c_clk;
-
+	reg [31:0] counter = 0;
 		
 	clk_divider div(
 		.reset(reset),
@@ -29,26 +29,28 @@ module Lab2(
 		);
 	
 	always@(posedge i2c_clk) begin
+		counter <= counter + 1;
 		case(sw)
-			0: leds <= 16'h0000;
+			0: leds <= 16'hFFFF;
 			1: begin
-				/*leds[11:0] <= out[31:20];
-				leds[15:12] <= 0;*/
-				leds[15:0] <= out[31:16];
+				leds[15:0] <= out[15:0];
 			end
 			
 			2: begin
-				/*leds[11:0] <= out[15:4];
-				leds[15:12] <= 0;*/
 				leds[15:0] <= out[15:0];
 			end
 			
 			3: begin
-				if (out[31:20] >= 0) leds[0] <= 1;
+				/*if (out[31:20] >= 0) leds[0] <= 1;
 				else leds[0] <= 0;
 				if (out[15:4] >= 0) leds[1] <= 1;
 				else leds[1] <= 0;
-				leds [15:2] <= 0;
+				leds [15:2] <= 0;*/
+				
+				if (counter >= 2000000) begin
+					leds <= leds + 1;
+					counter <= 0;
+				end
 			end
 		endcase
 	end

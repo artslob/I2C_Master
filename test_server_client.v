@@ -8,7 +8,7 @@ module test_server_client;
 	reg [1:0] sw;
 
 	// Outputs
-	wire [31:0] out;
+	wire [15:0] out;
 
 	// Instantiate the Unit Under Test (UUT)
 	server_client serv_cli (

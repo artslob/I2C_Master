@@ -4,12 +4,14 @@ module server_client(
 	input clk,
 	input reset,
 	input [1:0] sw,
-	output wire [31:0] out
+	output wire [15:0] out
    );
 	
 	wire sda;
 	wire scl;
 	wire i2c_clk;
+	
+	reg [31:0] tmp = 0;
 	
 	PULLUP pull_up_sda (.O(sda));
 	PULLUP pull_up_scl (.O(scl));
@@ -33,5 +35,13 @@ module server_client(
 		.scl(scl),
 		.sda(sda)
 	);
+	
+	
+	always@(posedge i2c_clk) begin
+		tmp <= tmp + 1;
+		if (tmp >= 20000000) begin
+			tmp <= 0;
+		end
+	end
 
 endmodule

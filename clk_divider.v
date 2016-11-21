@@ -8,22 +8,15 @@ module clk_divider(
 	
 localparam DELAY = 800;
 
-reg [15:0] count = 0;
-reg flag = 0;
+reg [15:0] count = 800;
 	
 always@(clk) begin
-	if (reset == 1 && flag == 0) begin
-		clk_out <= 0;
-		flag <= 1;
+	if (count == DELAY) begin
+		count <= 0;
+		clk_out <= clk;
 	end
 	else begin
-		if (count == DELAY) begin
-			count <= 0;
-			clk_out <= ~clk;
-		end
-		else begin
-			count <= count + 1;
-		end
+		count <= count + 1;
 	end
 end
 

@@ -4,7 +4,7 @@ module I2C(
 	input clk,
 	input reset,
 	input [1:0] sw,
-	output reg [31:0] out,
+	output reg [15:0] out,
 	output wire scl,
 	inout wire sda
 	);
@@ -70,9 +70,9 @@ module I2C(
 	always@(posedge clk) begin
 		if (reset == 1) begin
 			state <= STATE_IDLE;
-			out <= 32'd0;
-			addr <= 7'b100_1000;//h90 in 8 bit
-			sub_addr <= 8'b0000_0001;
+			out <= 16'hFFFF;
+			addr <= 7'b100_1011;//h4B in 7 bit
+			sub_addr <= 8'h0B;
 			delay <= 8'd0;
 			count <= 8'd0;
 			data <= 8'd0;
@@ -93,7 +93,6 @@ module I2C(
 						end
 						else begin
 							state <= STATE_IDLE;
-							out[31] <= 1'b1;
 						end
 					end
 					
@@ -112,7 +111,7 @@ module I2C(
 						sda_enable <= 0;	
 						data[count] <= sda;
 						if (count != 8) begin
-							//out[data_count * 8 + count] <= sda;
+							out[data_count * 8 + count] <= sda;
 						end
 						count <= count - 1;
 					end
@@ -183,7 +182,7 @@ module I2C(
 					
 					STATE_RW: begin //3
 						sda_value <= rw; //write sub_addr
-						data_count <= 3;
+						data_count <= 0;
 						delay <= delay - 1;
 					end
 					

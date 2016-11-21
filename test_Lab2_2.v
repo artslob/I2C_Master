@@ -9,12 +9,10 @@ module test_Lab2_2;
 
 	// Outputs
 	wire [15:0] leds;
-	wire scl1;
-	wire scl2;
+	wire scl;
 
 	// Bidirs
-	wire sda1;
-	wire sda2;
+	wire sda;
 
 	// Instantiate the Unit Under Test (UUT)
 	Lab2 uut (
@@ -22,10 +20,8 @@ module test_Lab2_2;
 		.reset(reset), 
 		.sw(sw), 
 		.leds(leds), 
-		.sda1(sda1), 
-		.sda2(sda2), 
-		.scl1(scl1), 
-		.scl2(scl2)
+		.sda(sda), 
+		.scl(scl)
 	);
 
 	initial begin

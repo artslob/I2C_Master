@@ -5,7 +5,7 @@ module PmodCDC1 (scl, sda);
 	//
 	// parameters
 	//
-	parameter I2C_ADR = 7'b100_1000;
+	parameter I2C_ADR = 7'b100_1011;
 
 	//
 	// input && outpus
