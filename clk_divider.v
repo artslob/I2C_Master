@@ -6,9 +6,9 @@ module clk_divider(
 	output reg clk_out
 	);
 	
-localparam DELAY = 800;
+localparam DELAY = 2;
 
-reg [15:0] count = 800;
+reg [15:0] count = DELAY;
 	
 always@(clk) begin
 	if (count == DELAY) begin
