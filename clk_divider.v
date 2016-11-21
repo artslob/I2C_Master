@@ -6,7 +6,7 @@ module clk_divider(
 	output reg clk_out
 	);
 	
-localparam DELAY = 80;
+localparam DELAY = 800;
 
 reg [15:0] count = 0;
 reg flag = 0;

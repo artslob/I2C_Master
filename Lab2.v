@@ -4,13 +4,14 @@ module Lab2(
 	input clk,
 	input reset,
 	input [1:0] sw,
-	output reg [15:0] leds
+	output reg [15:0] leds,
+	inout wire sda,
+	output wire scl
    );
 	
 	wire [31:0] out;
 	wire i2c_clk;
-	wire sda;
-	wire scl;
+
 		
 	clk_divider div(
 		.reset(reset),
@@ -27,17 +28,19 @@ module Lab2(
 		.sda(sda)
 		);
 	
-	always@* begin
+	always@(posedge i2c_clk) begin
 		case(sw)
-			0: leds <= 0;
+			0: leds <= 16'h0000;
 			1: begin
-				leds[11:0] <= out[31:20];
-				leds[15:12] <= 0;
+				/*leds[11:0] <= out[31:20];
+				leds[15:12] <= 0;*/
+				leds[15:0] <= out[31:16];
 			end
 			
 			2: begin
-				leds[11:0] <= out[15:4];
-				leds[15:12] <= 0;
+				/*leds[11:0] <= out[15:4];
+				leds[15:12] <= 0;*/
+				leds[15:0] <= out[15:0];
 			end
 			
 			3: begin
@@ -45,6 +48,7 @@ module Lab2(
 				else leds[0] <= 0;
 				if (out[15:4] >= 0) leds[1] <= 1;
 				else leds[1] <= 0;
+				leds [15:2] <= 0;
 			end
 		endcase
 	end

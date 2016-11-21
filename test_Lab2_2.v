@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module test_server_client;
+module test_Lab2_2;
 
 	// Inputs
 	reg clk;
@@ -8,30 +8,41 @@ module test_server_client;
 	reg [1:0] sw;
 
 	// Outputs
-	wire [31:0] out;
+	wire [15:0] leds;
+	wire scl1;
+	wire scl2;
+
+	// Bidirs
+	wire sda1;
+	wire sda2;
 
 	// Instantiate the Unit Under Test (UUT)
-	server_client serv_cli (
+	Lab2 uut (
 		.clk(clk), 
 		.reset(reset), 
 		.sw(sw), 
-		.out(out)
+		.leds(leds), 
+		.sda1(sda1), 
+		.sda2(sda2), 
+		.scl1(scl1), 
+		.scl2(scl2)
 	);
-	
+
 	initial begin
 		clk = 0;
 		forever begin
 			clk = #5 ~clk;
 		end
 	end
-
+	
 	initial begin
 		// Initialize Inputs
 		reset = 1;
 		sw = 1;
 		
-		#10000; //10000 ns = 10 us
-		
+		#10000; // 1000ns = 1us
+        
+		// Add stimulus here
 		reset = 0;
 	end
       

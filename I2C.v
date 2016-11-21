@@ -72,7 +72,7 @@ module I2C(
 			state <= STATE_IDLE;
 			out <= 32'd0;
 			addr <= 7'b100_1000;//h90 in 8 bit
-			sub_addr <= 8'b0000_0000;
+			sub_addr <= 8'b0000_0001;
 			delay <= 8'd0;
 			count <= 8'd0;
 			data <= 8'd0;
@@ -91,7 +91,10 @@ module I2C(
 							else state <= STATE_DATA;
 							count <= 7;
 						end
-						else state <= STATE_IDLE;
+						else begin
+							state <= STATE_IDLE;
+							out[31] <= 1'b1;
+						end
 					end
 					
 					STATE_GACK2: begin //9
@@ -109,7 +112,7 @@ module I2C(
 						sda_enable <= 0;	
 						data[count] <= sda;
 						if (count != 8) begin
-							out[data_count * 8 + count] <= sda;
+							//out[data_count * 8 + count] <= sda;
 						end
 						count <= count - 1;
 					end
@@ -220,13 +223,17 @@ module I2C(
 							state <= STATE_STOP;
 							sda_enable <= 1;
 							sda_value <= 0;
+							delay <= 10000;
 						end
 					end
 					
 					STATE_STOP: begin //7
 						sda_value <= 1;
 						rw <= 0;
-						state <= STATE_IDLE;
+						delay <= delay - 1;
+						if (delay == 0) begin
+							state <= STATE_IDLE;
+						end
 					end
 					
 				endcase

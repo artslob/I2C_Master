@@ -9,12 +9,19 @@ module server_client(
 	
 	wire sda;
 	wire scl;
+	wire i2c_clk;
 	
 	PULLUP pull_up_sda (.O(sda));
 	PULLUP pull_up_scl (.O(scl));
 	
-	I2C server(
+	clk_divider div(
+		.reset(reset),
 		.clk(clk),
+		.clk_out(i2c_clk)
+		);
+	
+	I2C server(
+		.clk(i2c_clk),
 		.reset(reset),
 		.sw(sw),
 		.out(out),
