@@ -57,13 +57,10 @@ module I2C(
 		end
 	end
 	
-	always@(negedge clk) begin
-		scl_count <= scl_count + 1;
-	end
-	
 	always@(posedge clk) begin
+		scl_count <= scl_count + 1;
 		sda_count <= sda_count + 1;
-		if (scl_count == 1) begin
+		if (scl_count == 0) begin
 			scl_value <= ~scl_value;
 		end
 	end
@@ -174,7 +171,7 @@ module I2C(
 						count <= 6;
 						if (id_readed == 0) begin
 							data_count <= 0;
-							sub_addr <= 8'h03;//here id address, should be 0B!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+							sub_addr <= 8'h0B;//here id address, should be 0B!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 						end else begin
 							data_count <= 1;
 							sub_addr <= 8'h00;
@@ -268,58 +265,3 @@ module I2C(
 	end
 
 endmodule
-
-/* this where server receive */
-	/*always@(posedge scl) begin
-		case(state)
-			STATE_GACK2: begin //9
-				if (sda == 0) begin
-					state <= STATE_SUB_ADDR; //go to 10
-					sda_enable <= 1;
-					sda_value <= 0;
-				end else begin
-					state <= STATE_IDLE; //go to 0
-				end
-				count <= 7;
-			end
-			
-			STATE_DATA: begin //6
-				sda_enable <= 0;	
-				data[count] <= sda;
-				if (4 <= data_count && data_count <= 7 && count != 8) begin
-					out[(data_count - 4) * 8 + count] = sda;
-				end
-				count <= count - 1;
-			end
-		endcase
-	end*/
-	
-		/*always@(negedge scl) begin
-		case(state)
-			STATE_DATA: begin //6
-				if (count == 255) begin
-					data_count <= data_count - 1;
-					if(data_count == 0) begin
-						sda_enable <= 1;
-						sda_value <= 0;
-						state <= STATE_WACK2;
-					end else begin
-						sda_enable <= 1;
-						sda_value <= 0;
-						state <= STATE_WACK1;
-					end
-				end
-			end
-			
-			STATE_WACK1: begin //4
-				state <= STATE_DATA;
-				count <= 7;
-				sda_enable <= 0;
-			end
-			
-			STATE_GACK1: begin //8
-				sda_enable <= 0;
-				state <= STATE_GACK2; //go to 9
-			end
-		endcase
-	end*/

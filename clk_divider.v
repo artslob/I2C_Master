@@ -6,17 +6,21 @@ module clk_divider(
 	output reg clk_out
 	);
 	
-localparam DELAY = 2;
+localparam DELAY_L = 1000;
+localparam DELAY_H = 2000;
 
-reg [15:0] count = DELAY;
+reg [15:0] count = 0;
 	
-always@(clk) begin
-	if (count == DELAY) begin
-		count <= 0;
-		clk_out <= clk;
+always@(posedge clk) begin
+	count <= count + 1;
+	if (count <= DELAY_L) begin
+		clk_out <= 0;
+	end
+	else if (count <= DELAY_H) begin
+		clk_out <= 1;
 	end
 	else begin
-		count <= count + 1;
+		count <= 0;
 	end
 end
 

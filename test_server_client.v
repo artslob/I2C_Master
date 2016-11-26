@@ -32,7 +32,7 @@ module test_server_client;
 		reset = 1;
 		sw = 1;
 		
-		#100; //10000 ns = 10 us
+		#100000; //100000 ns = 100 us
 		
 		reset = 0;
 	end

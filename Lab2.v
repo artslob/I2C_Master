@@ -43,15 +43,15 @@ module Lab2(
 				leds[15:0] <= out[15:0];
 			end
 			
-			4: begin
-				leds <= 16'hFFFF;
-			end
-			
-			3: begin
+			2: begin
 				if (counter >= 2000000) begin
 					leds <= leds + 1;
 					counter <= 0;
 				end
+			end
+			
+			3: begin
+				leds <= 16'hFFFF;
 			end
 		endcase
 	end
